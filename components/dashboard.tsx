@@ -9,29 +9,43 @@ import { Bell, Camera, Users } from "lucide-react"
 import CameraGrid from "@/components/camera-grid"
 import AlertsList from "@/components/alerts-list"
 import CitizenSubmissionForm from "@/components/citizen-submission-form"
-import type { Alert, CameraStream } from "@/lib/types"
-import { mockAlerts, mockCameraStreams } from "@/lib/mock-data"
+import { useAlerts } from "@/hooks/use-alerts"
+import { useCameras } from "@/hooks/user-cameras"
+
 
 export default function Dashboard() {
-  const [alerts, setAlerts] = useState<Alert[]>(mockAlerts)
-  const [cameraStreams, setCameraStreams] = useState<CameraStream[]>(mockCameraStreams)
+  const { alerts, loading: alertsLoading } = useAlerts();
+  const { cameras, loading: camerasLoading } = useCameras();
   const [activeTab, setActiveTab] = useState("monitoring")
 
-  const handleNewSubmission = (submission: any) => {
-    const newAlert: Alert = {
-      id: `citizen-${Date.now()}`,
-      title: submission.title,
-      description: submission.description,
-      location: submission.location,
-      timestamp: new Date().toISOString(),
-      status: "new",
-      priority: submission.priority,
-      lawReference: "На рассмотрении",
-      source: "Гражданин",
-      imageUrl: submission.imageUrl || null,
-    }
+  const handleNewSubmission = async (submission: any) => {
+    try {
+      const response = await fetch('/api/alerts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: submission.title,
+          description: submission.description,
+          location: submission.location,
+          status: "new",
+          priority: submission.priority,
+          lawReference: "На рассмотрении",
+          source: "Гражданин",
+          imageUrl: submission.imageUrl || null,
+        }),
+      });
 
-    setAlerts([newAlert, ...alerts])
+      if (!response.ok) {
+        throw new Error('Failed to create alert');
+      }
+
+      // Reload page or refetch alerts
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating alert:', error);
+    }
   }
 
   return (
@@ -77,7 +91,7 @@ export default function Dashboard() {
                 <CardDescription>Мониторинг общественных мест и зеленых зон</CardDescription>
               </CardHeader>
               <CardContent>
-                <CameraGrid cameraStreams={cameraStreams} />
+                <CameraGrid cameraStreams={cameras} />
               </CardContent>
             </Card>
 

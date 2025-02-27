@@ -1,4 +1,15 @@
-import { serial, text, timestamp, pgTable, varchar, boolean, integer, pgEnum } from 'drizzle-orm/pg-core';
+import {
+    pgTable,
+    serial,
+    text,
+    timestamp,
+    varchar,
+    boolean,
+    integer,
+    pgEnum,
+    primaryKey
+} from 'drizzle-orm/pg-core';
+
 
 // Define enums for status and priority
 export const alertStatusEnum = pgEnum('alert_status', ['new', 'in_progress', 'resolved', 'dismissed']);
