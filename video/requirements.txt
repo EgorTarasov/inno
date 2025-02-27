@@ -4,3 +4,4 @@ psycopg2-binary
 tensorflow
 requests
 minio
+tensorflow_hub
