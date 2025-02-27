@@ -73,3 +73,42 @@ export interface Protocol {
   };
   notes?: string;
 }
+
+import 'next-auth';
+
+export type UserRole = 'admin' | 'moderator' | 'citizen';
+
+// Extend the existing next-auth types
+declare module 'next-auth' {
+  interface User {
+    role: UserRole;
+  }
+
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email: string;
+      role: UserRole;
+    };
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string;
+    role: UserRole;
+  }
+}
+
+export interface RegisterFormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface LoginFormData {
+  email: string;
+  password: string;
+}

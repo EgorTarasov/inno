@@ -8,6 +8,13 @@
       "when": 1740643713547,
       "tag": "0000_organic_zaladane",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1740664538415,
+      "tag": "0001_soft_hulk",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,7 @@ import {
 // Define enums for status and priority
 export const alertStatusEnum = pgEnum('alert_status', ['new', 'in_progress', 'resolved', 'dismissed']);
 export const alertPriorityEnum = pgEnum('alert_priority', ['low', 'medium', 'high']);
+export const userRoleEnum = pgEnum('user_role', ['admin', 'moderator', 'citizen']);
 
 // Camera streams table
 export const cameraStreams = pgTable('camera_streams', {
@@ -42,4 +43,23 @@ export const alerts = pgTable('alerts', {
     source: varchar('source', { length: 100 }),
     imageUrl: text('image_url'),
     cameraId: integer('camera_id').references(() => cameraStreams.id),
+});
+
+// Users table
+export const users = pgTable('users', {
+    id: serial('id').primaryKey(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    password: varchar('password', { length: 255 }).notNull(),
+    name: varchar('name', { length: 255 }),
+    role: userRoleEnum('role').default('citizen'),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Sessions table for NextAuth
+export const sessions = pgTable('sessions', {
+    id: text('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    expires: timestamp('expires', { precision: 3 }).notNull(),
+    sessionToken: text('session_token').notNull().unique(),
 });
