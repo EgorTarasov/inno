@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,7 +38,7 @@ const createDefaultProtocol = (): Protocol => {
             article: "",
             description: "",
             circumstances: "",
-            evidence: [], // Make sure this is an empty array
+            evidence: [],
         },
         witnesses: [],
         offenderExplanation: "",
@@ -51,26 +51,25 @@ const createDefaultProtocol = (): Protocol => {
     };
 };
 
-export default function ProtocolsPage() {
+// Create a component that uses search params 
+function ProtocolPageContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { data: session, status } = useSession() // Get session data
+    const { data: session, status } = useSession()
     const [protocol, setProtocol] = useState<Protocol>(createDefaultProtocol())
     const [activeTab, setActiveTab] = useState("form")
 
-    
     useEffect(() => {
         if (status === "authenticated" && session?.user) {
             // Get user data from session
             const user = session.user;
 
-            // You may need to adjust these fields based on your actual user model
             setProtocol(prev => ({
                 ...prev,
                 official: {
                     fullName: user.name || "",
-                    position: user.role || "Инспектор", // Default position if not available
-                    organization:   "Городская инспекция", // Default org if not available
+                    position: user.role || "Инспектор",
+                    organization: "Городская инспекция",
                 }
             }));
         }
@@ -110,7 +109,6 @@ export default function ProtocolsPage() {
                 circumstances: description,
                 date: date,
                 time: time,
-                // Modified to match the expected format (array of strings)
                 evidence: imageUrl ?
                     [`Фото с места нарушения: ${imageUrl}`, ...prev.violation.evidence] :
                     prev.violation.evidence
@@ -124,7 +122,6 @@ export default function ProtocolsPage() {
         setProtocol(updatedProtocol)
     }
 
-    // In handleSaveProtocol in your protocols page:
     const handleSaveProtocol = async () => {
         try {
             const response = await fetch("/api/protocols", {
@@ -205,5 +202,19 @@ export default function ProtocolsPage() {
                 </TabsContent>
             </Tabs>
         </div>
+    )
+}
+
+// Loading fallback component
+function ProtocolsLoading() {
+    return <div className="container mx-auto p-4">Загрузка...</div>
+}
+
+// Main page component with Suspense
+export default function ProtocolsPage() {
+    return (
+        <Suspense fallback={<ProtocolsLoading />}>
+            <ProtocolPageContent />
+        </Suspense>
     )
 }
