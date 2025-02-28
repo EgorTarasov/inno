@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { alerts } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 
 // Function to notify WebSocket server
 async function notifyAlertsUpdate() {
@@ -16,97 +15,38 @@ async function notifyAlertsUpdate() {
     }
 }
 
-// Get a single alert
-export async function GET(
-    request: Request,
-    { params }: { params: { id: number } }
-) {
+// Get all alerts
+export async function GET() {
     try {
-        const id = params.id;
-        const alert = await db.query.alerts.findFirst({
-            where: eq(alerts.id, id)
-        });
-
-        if (!alert) {
-            return NextResponse.json(
-                { error: 'Alert not found' },
-                { status: 404 }
-            );
-        }
-
-        return NextResponse.json(alert);
+        const allAlerts = await db.query.alerts.findMany();
+        return NextResponse.json(allAlerts);
     } catch (error) {
-        console.error('Error fetching alert:', error);
+        console.error('Error fetching alerts:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch alert' },
+            { error: 'Failed to fetch alerts' },
             { status: 500 }
         );
     }
 }
 
-// Update a single alert
-export async function PATCH(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
+// Create a new alert
+export async function POST(request: Request) {
     try {
-        const id = params.id;
         const body = await request.json();
 
-        const updatedAlert = await db
-            .update(alerts)
-            .set(body)
-            .where(eq(alerts.id, id))
+        const newAlert = await db
+            .insert(alerts)
+            .values(body)
             .returning();
-
-        if (!updatedAlert.length) {
-            return NextResponse.json(
-                { error: 'Alert not found' },
-                { status: 404 }
-            );
-        }
 
         // Notify WebSocket server about the update
         await notifyAlertsUpdate();
 
-        return NextResponse.json(updatedAlert[0]);
+        return NextResponse.json(newAlert[0], { status: 201 });
     } catch (error) {
-        console.error('Error updating alert:', error);
+        console.error('Error creating alert:', error);
         return NextResponse.json(
-            { error: 'Failed to update alert' },
-            { status: 500 }
-        );
-    }
-}
-
-// Delete a single alert
-export async function DELETE(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
-    try {
-        const id = params.id;
-
-        const deletedAlert = await db
-            .delete(alerts)
-            .where(eq(alerts.id, id))
-            .returning();
-
-        if (!deletedAlert.length) {
-            return NextResponse.json(
-                { error: 'Alert not found' },
-                { status: 404 }
-            );
-        }
-
-        // Notify WebSocket server about the update
-        await notifyAlertsUpdate();
-
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error('Error deleting alert:', error);
-        return NextResponse.json(
-            { error: 'Failed to delete alert' },
+            { error: 'Failed to create alert' },
             { status: 500 }
         );
     }

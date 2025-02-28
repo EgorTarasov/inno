@@ -6,8 +6,10 @@ import { SessionProvider } from "next-auth/react"
 export default function Home() {
   return (
     <>
-    <script defer data-domain="inno.larek.tech" src="https://plausible-iwgkwss80g8s0k40www0ok0g.larek.tech/js/script.file-downloads.hash.outbound-links.js"></script>
-    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+      <script defer data-domain="inno.larek.tech" src="https://plausible-iwgkwss80g8s0k40www0ok0g.larek.tech/js/script.file-downloads.hash.outbound-links.js"></script>
+      <script dangerouslySetInnerHTML={{
+        __html: `window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }`
+      }} />
 
       <main className="min-h-screen bg-background">
         <Suspense fallback={<Loading />}>
@@ -17,4 +19,3 @@ export default function Home() {
     </>
   )
 }
-
