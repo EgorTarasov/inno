@@ -15,6 +15,13 @@
       "when": 1740664538415,
       "tag": "0001_soft_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1740688888119,
+      "tag": "0002_brief_meggan",
+      "breakpoints": true
     }
   ]
 }

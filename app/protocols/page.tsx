@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,50 +9,122 @@ import ProtocolForm from "@/components/protocol-form"
 import ProtocolPreview from "@/components/protocol-preview"
 import type { Protocol } from "@/lib/types"
 import { generateRandomId } from "@/lib/utils"
+import { useSession } from "next-auth/react"
 
-const defaultProtocol: Protocol = {
-    id: generateRandomId(),
-    dateCreated: new Date().toISOString().split("T")[0],
-    placeCreated: "",
-    official: {
-        fullName: "",
-        position: "",
-        organization: "",
-    },
-    offender: {
-        fullName: "",
-        address: "",
-        documentType: "passport",
-        documentNumber: "",
-    },
-    violation: {
-        date: new Date().toISOString().split("T")[0],
-        time: new Date().toTimeString().split(" ")[0].substring(0, 5),
-        location: "",
-        article: "",
-        description: "",
-        circumstances: "",
-        evidence: [],
-    },
-    witnesses: [],
-    offenderExplanation: "",
-    signatures: {
-        official: false,
-        offender: false,
+const createDefaultProtocol = (): Protocol => {
+    const today = new Date();
+    const dateStr = today.toISOString().split("T")[0];
+    const timeStr = today.toTimeString().split(" ")[0].substring(0, 5);
+
+    return {
+        id: generateRandomId(),
+        dateCreated: dateStr,
+        placeCreated: "",
+        official: {
+            fullName: "",
+            position: "",
+            organization: "",
+        },
+        offender: {
+            fullName: "",
+            address: "",
+            documentType: "passport",
+            documentNumber: "",
+        },
+        violation: {
+            date: dateStr,
+            time: timeStr,
+            location: "",
+            article: "",
+            description: "",
+            circumstances: "",
+            evidence: [], // Make sure this is an empty array
+        },
         witnesses: [],
-    },
-    notes: "",
-}
+        offenderExplanation: "",
+        signatures: {
+            official: false,
+            offender: false,
+            witnesses: [],
+        },
+        notes: "",
+    };
+};
 
 export default function ProtocolsPage() {
     const router = useRouter()
-    const [protocol, setProtocol] = useState<Protocol>(defaultProtocol)
+    const searchParams = useSearchParams()
+    const { data: session, status } = useSession() // Get session data
+    const [protocol, setProtocol] = useState<Protocol>(createDefaultProtocol())
     const [activeTab, setActiveTab] = useState("form")
+
+    
+    useEffect(() => {
+        if (status === "authenticated" && session?.user) {
+            // Get user data from session
+            const user = session.user;
+
+            // You may need to adjust these fields based on your actual user model
+            setProtocol(prev => ({
+                ...prev,
+                official: {
+                    fullName: user.name || "",
+                    position: user.role || "Инспектор", // Default position if not available
+                    organization:   "Городская инспекция", // Default org if not available
+                }
+            }));
+        }
+    }, [session, status]);
+
+    useEffect(() => {
+        const alertId = searchParams.get('alertId');
+        if (!alertId) return;
+
+        const title = searchParams.get('title') || '';
+        const description = searchParams.get('description') || '';
+        const location = searchParams.get('location') || '';
+        const lawReference = searchParams.get('lawReference') || '';
+        const timestamp = searchParams.get('timestamp') || '';
+        const imageUrl = searchParams.get('imageUrl') || '';
+
+        // Create a date and time string from the timestamp
+        let date = new Date().toISOString().split("T")[0];
+        let time = new Date().toTimeString().split(" ")[0].substring(0, 5);
+
+        try {
+            const eventDate = new Date(timestamp);
+            date = eventDate.toISOString().split("T")[0];
+            time = eventDate.toTimeString().split(" ")[0].substring(0, 5);
+        } catch (e) {
+            console.error("Error parsing timestamp:", e);
+        }
+
+        // Update protocol with query parameter values
+        setProtocol(prev => ({
+            ...prev,
+            violation: {
+                ...prev.violation,
+                location: location,
+                article: lawReference,
+                description: title,
+                circumstances: description,
+                date: date,
+                time: time,
+                // Modified to match the expected format (array of strings)
+                evidence: imageUrl ?
+                    [`Фото с места нарушения: ${imageUrl}`, ...prev.violation.evidence] :
+                    prev.violation.evidence
+            },
+            notes: `Протокол создан на основе оповещения #${alertId}`
+        }));
+    }, [searchParams]);
+
 
     const handleProtocolChange = (updatedProtocol: Protocol) => {
         setProtocol(updatedProtocol)
     }
 
+    // In handleSaveProtocol in your protocols page:
     const handleSaveProtocol = async () => {
         try {
             const response = await fetch("/api/protocols", {
@@ -65,6 +137,18 @@ export default function ProtocolsPage() {
 
             if (!response.ok) {
                 throw new Error("Failed to save protocol")
+            }
+
+            // If we have an alertId, update the alert status to in-progress
+            const alertId = searchParams.get('alertId');
+            if (alertId) {
+                await fetch(`/api/alerts/${alertId}`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ status: "in-progress" }),
+                });
             }
 
             router.push("/protocols/list")
@@ -123,4 +207,3 @@ export default function ProtocolsPage() {
         </div>
     )
 }
-

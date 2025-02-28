@@ -173,6 +173,27 @@ export default function ProtocolForm({ protocol, onChange, onPreview }: Protocol
         updateProtocol(values)
     }
 
+    useEffect(() => {
+        // Reset form with new values from the protocol prop
+        form.reset({
+            id: protocol.id,
+            dateCreated: protocol.dateCreated,
+            placeCreated: protocol.placeCreated,
+            official: protocol.official,
+            offenderType: "fullName" in protocol.offender ? "person" : "legalEntity",
+            personOffender: "fullName" in protocol.offender ? protocol.offender : undefined,
+            legalEntityOffender: "name" in protocol.offender ? protocol.offender : undefined,
+            violation: protocol.violation,
+            witnesses: protocol.witnesses || [],
+            offenderExplanation: protocol.offenderExplanation || "",
+            signatures: protocol.signatures,
+            notes: protocol.notes || "",
+        });
+
+        // Also update the offender type state if needed
+        setOffenderType("fullName" in protocol.offender ? "person" : "legalEntity");
+    }, [protocol, form.reset]);
+
     // Update form when offender type changes
     useEffect(() => {
         form.setValue("offenderType", offenderType)

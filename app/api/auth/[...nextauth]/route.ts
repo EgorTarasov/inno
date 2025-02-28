@@ -52,12 +52,32 @@ export const authOptions = {
             return token;
         },
         async session({ session, token }) {
-            if (token) {
-                session.user.id = token.id;
-                session.user.role = token.role;
+            // Add custom user data to the session
+            if (session?.user && token?.sub) {
+                // Fetch additional user data from database
+                const userData = await db.query.users.findFirst({
+                    where: eq(users.id, token.sub),
+                    columns: {
+                        name: true,
+                        email: true,
+                        role: true,
+                        position: true,
+                        organization: true,
+                        // Add any other fields you need
+                    }
+                });
+
+                // Merge the data into the session
+                session.user = {
+                    ...session.user,
+                    id: token.sub,
+                    role: userData?.role || "citizen",
+                    position: userData?.position || "",
+                    organization: userData?.organization || ""
+                };
             }
             return session;
-        }
+        },
     },
     session: {
         strategy: "jwt",

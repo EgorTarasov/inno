@@ -1,4 +1,17 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: city_monitoring
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
 
   video-processing:
     build:
@@ -16,4 +29,3 @@ services:
 
 volumes:
   postgres_data:
-  minio_data:

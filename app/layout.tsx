@@ -3,6 +3,7 @@ import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import NextAuthProvider from "@/components/auth-provider";
+import { AlertsProvider } from "@/lib/context/alerts-context";
 
 
 const fontSans = FontSans({
@@ -24,12 +25,14 @@ export default function RootLayout({
     <html lang="ru">
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+        "min-h-screen bg-background font-sans antialiased",
           fontSans.variable
         )}
       >
         <NextAuthProvider>
-          {children}
+          <AlertsProvider>
+            {children}
+          </AlertsProvider>
         </NextAuthProvider>
       </body>
     </html>

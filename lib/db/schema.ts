@@ -52,6 +52,8 @@ export const users = pgTable('users', {
     password: varchar('password', { length: 255 }).notNull(),
     name: varchar('name', { length: 255 }),
     role: userRoleEnum('role').default('citizen'),
+    position: text("position"), // Added field
+    organization: text("organization"), // Added field
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
 });

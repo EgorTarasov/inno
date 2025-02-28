@@ -79,17 +79,21 @@ import 'next-auth';
 export type UserRole = 'admin' | 'moderator' | 'citizen';
 
 // Extend the existing next-auth types
-declare module 'next-auth' {
+declare module "next-auth" {
   interface User {
-    role: UserRole;
+    role?: string;
+    position?: string;
+    organization?: string;
   }
 
   interface Session {
     user: {
       id: string;
-      name?: string | null;
+      name: string;
       email: string;
-      role: UserRole;
+      role: string;
+      position?: string;
+      organization?: string;
     };
   }
 }
